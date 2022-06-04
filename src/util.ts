@@ -61,6 +61,8 @@ export function mixins (...Ctors: VueClass<Vue>[]): VueClass<Vue> {
 
 export function isPrimitive (value: any): boolean {
   const type = typeof value
+  // 判读一个值是不是原始类型：
+  // value为null，或type不是object/function
   return value == null || (type !== 'object' && type !== 'function')
 }
 
