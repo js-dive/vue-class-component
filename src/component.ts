@@ -27,24 +27,42 @@ export function componentFactory (
 ): VueClass<Vue> {
   options.name = options.name || (Component as any)._componentTag || (Component as any).name
   // prototype props.
+  // 获得class上所有在原形上的属性
   const proto = Component.prototype
+  // 把这些属性给遍历一遍
   Object.getOwnPropertyNames(proto).forEach(function (key) {
     if (key === 'constructor') {
       return
     }
 
     // hooks
+    // 如果属性名是生命周期钩子名称名，那么就把对应属性值赋到option里
     if ($internalHooks.indexOf(key) > -1) {
       options[key] = proto[key]
       return
     }
+    // 获得原型上各个属性描述符
     const descriptor = Object.getOwnPropertyDescriptor(proto, key)!
+
+    // 如果属性值不是undefined
     if (descriptor.value !== void 0) {
       // methods
+      /**
+       * 如果属性值为函数，那么就把对应属性值赋到option.methods里
+       */
       if (typeof descriptor.value === 'function') {
         (options.methods || (options.methods = {}))[key] = descriptor.value
       } else {
         // typescript decorated data
+        /**
+         * 如果属性值是正常的值，那就通过mixin把原有属性值给混入进去
+         *
+         * 一般来说，使用class语法，prototype上不会存在属性值
+         *
+         * 因此准确来说，这里处理一些额外的情况而导致的、使得prototype上出现属性值的改变，例如：
+         * 1. 对属性使用了属性装饰器
+         * 2. 在外部通过Component.prototype手动更改了原型
+         */
         (options.mixins || (options.mixins = [])).push({
           data (this: Vue) {
             return { [key]: descriptor.value }
@@ -52,6 +70,11 @@ export function componentFactory (
         })
       }
     } else if (descriptor.get || descriptor.set) {
+      /**
+       * 如果属性描述符中包含get、set，那么就认为它是计算属性，因此赋值到option.computed里
+       *
+       * 值得注意的是：使用class语法，prototype上会存在get/set计算属性
+       */
       // computed properties
       (options.computed || (options.computed = {}))[key] = {
         get: descriptor.get,
@@ -61,8 +84,34 @@ export function componentFactory (
   })
 
   // add data hook to collect class properties as Vue instance's data
+  // 添加data mixin，以收集类的属性，来作为Vue实例的数据
   ;(options.mixins || (options.mixins = [])).push({
     data (this: Vue) {
+      /**
+       * 由于使用class语法，prototype上不会存在属性，只存在方法（属性将会在constructor中赋值）：
+       *
+       * class A {
+       *   constructor () {
+       *     console.log(this.a, this.b)
+       *   }
+       *   a = 1
+       *   b = 2
+       * }
+       *
+       * 相当于 ->
+       *
+       * class A {
+       *   constructor() {
+       *       this.a = 1;
+       *       this.b = 2;
+       *       console.log(this.a, this.b);
+       *   }
+       * }
+       *
+       * 因此要拿到在类中写的属性，就需要将类在下列调用中实例化一次我们通过class定义的类
+       */
+      // this 为vm，Vue实例（真实实例）
+      // Component 为我们通过class定义的类
       return collectDataFromConstructor(this, Component)
     }
   })
@@ -75,6 +124,7 @@ export function componentFactory (
   }
 
   // find super
+  // 查找父类
   const superProto = Object.getPrototypeOf(Component.prototype)
   const Super = superProto instanceof Vue
     ? superProto.constructor as VueClass<Vue>
@@ -87,6 +137,7 @@ export function componentFactory (
     copyReflectionMetadata(Extended, Component)
   }
 
+  // 经过以上一堆操作，就得到了一个被extend后组件类
   return Extended
 }
 
