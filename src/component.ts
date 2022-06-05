@@ -21,6 +21,12 @@ export const $internalHooks = [
   'serverPrefetch' // 2.6
 ]
 
+/**
+ * 组件工厂函数
+ * @param Component 我们所编写的class
+ * @param options 组件选项
+ * @returns 通过Vue.extends得到的组件
+ */
 export function componentFactory (
   Component: VueClass<Vue>,
   options: ComponentOptions<Vue> = {}
