@@ -17,7 +17,18 @@ export interface VueDecorator {
   (target: Vue, key: string, index: number): void
 }
 
-export function createDecorator (factory: (options: ComponentOptions<Vue>, key: string, index: number) => void): VueDecorator {
+/**
+ * 创建装饰器
+ * @param factory 装饰器工厂函数
+ * @returns 用于在构造函数装饰器队列中插入装饰器的函数
+ */
+export function createDecorator (
+  factory: (
+    options: ComponentOptions<Vue>, // 组件选项
+    key: string, // class中被装饰的key
+    index: number
+  ) => void
+): VueDecorator {
   return (target: Vue | typeof Vue, key?: any, index?: any) => {
     const Ctor = typeof target === 'function'
       ? target as DecoratedClass
@@ -28,6 +39,7 @@ export function createDecorator (factory: (options: ComponentOptions<Vue>, key: 
     if (typeof index !== 'number') {
       index = undefined
     }
+    // 函数装饰器队列中的函数，参数为options，即组件选项
     Ctor.__decorators__.push(options => factory(options, key, index))
   }
 }
