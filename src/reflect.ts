@@ -12,12 +12,15 @@ export function copyReflectionMetadata (
   to: VueConstructor,
   from: VueClass<Vue>
 ) {
+  // 转发组件构造函数（相当于类）的metadata
   forwardMetadata(to, from)
 
+  // 转发原型上的metadata
   Object.getOwnPropertyNames(from.prototype).forEach(key => {
     forwardMetadata(to.prototype, from.prototype, key)
   })
 
+  // TODO: 转发类静态方法的metadata？
   Object.getOwnPropertyNames(from).forEach(key => {
     forwardMetadata(to, from, key)
   })

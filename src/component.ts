@@ -137,8 +137,10 @@ export function componentFactory (
     : Vue
   const Extended = Super.extend(options)
 
+  // TODO:
   forwardStaticMembers(Extended, Component, Super)
 
+  // 如果支持reflect-metadata，则复制metadata
   if (reflectionIsSupported()) {
     copyReflectionMetadata(Extended, Component)
   }
@@ -173,6 +175,12 @@ const shouldIgnore = {
   caller: true
 }
 
+/**
+ * 转发静态成员
+ * @param Extended TODO: 扩展？
+ * @param Original TODO: 原始？
+ * @param Super TODO: 父类？
+ */
 function forwardStaticMembers (
   Extended: typeof Vue,
   Original: typeof Vue,
